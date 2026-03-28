@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NEXUS AI — The Neural Frontier</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#02080f;--cyan:#00e5ff;--cyan2:#00b4cc;--cyan3:#00fff9;
+  --teal:#00897b;--text:#c8eef5;--text2:rgba(200,238,245,0.55);
+  --border:rgba(0,229,255,0.15);--glow:0 0 24px rgba(0,229,255,0.45);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;overflow-x:hidden;cursor:none;}
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--cyan2);}
+
+/* CURSOR */
+#cur{position:fixed;width:10px;height:10px;background:var(--cyan);border-radius:50%;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);mix-blend-mode:screen;box-shadow:0 0 14px var(--cyan);transition:width .2s,height .2s;}
+#cur-ring{position:fixed;width:36px;height:36px;border:1px solid var(--cyan);border-radius:50%;pointer-events:none;z-index:99998;transform:translate(-50%,-50%);opacity:.45;transition:width .2s,height .2s;}
+
+/* ════ LOADER ════ */
+#loader{position:fixed;inset:0;z-index:9500;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;}
+#loader.fade-out{animation:ldOut 1.3s cubic-bezier(.4,0,.2,1) forwards;}
+@keyframes ldOut{0%{opacity:1;transform:scale(1);}70%{opacity:1;transform:scale(1.03);}100%{opacity:0;transform:scale(1.07);visibility:hidden;}}
+#ld-canvas{position:absolute;inset:0;width:100%;height:100%;}
+#loader::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.07) 3px,rgba(0,0,0,.07) 4px);z-index:3;}
+#loader::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 55% 55% at 50% 50%,transparent 30%,rgba(0,0,0,.9) 100%);z-index:5;}
+.ld-ui{position:relative;z-index:6;text-align:center;display:flex;flex-direction:column;align-items:center;}
+.ld-top-tag{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.55em;color:rgba(0,229,255,.4);margin-bottom:26px;animation:fup .8s ease .1s both;}
+.ld-logo{font-family:'Orbitron',monospace;font-weight:900;font-size:clamp(34px,7vw,78px);letter-spacing:.18em;background:linear-gradient(160deg,#fff 0%,var(--cyan) 55%,var(--teal) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 28px rgba(0,229,255,.55));animation:fup .8s ease .3s both;}
+.ld-byline{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.38em;color:var(--cyan2);margin-top:6px;margin-bottom:40px;animation:fup .8s ease .5s both;}
+@keyframes fup{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+.ld-bar-outer{width:min(360px,70vw);animation:fup .8s ease .6s both;}
+.ld-track{height:1px;background:rgba(0,229,255,.1);position:relative;}
+.ld-fill{height:1px;width:0%;background:linear-gradient(90deg,var(--teal),var(--cyan),#fff);box-shadow:0 0 10px var(--cyan),0 0 22px rgba(0,229,255,.35);transition:width .05s linear;position:relative;}
+.ld-fill::after{content:'';position:absolute;right:-1px;top:-3.5px;width:8px;height:8px;background:#fff;border-radius:50%;box-shadow:0 0 12px var(--cyan),0 0 24px var(--cyan3);}
+.ld-pct{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.28em;color:var(--text2);text-align:right;margin-top:10px;}
+.ld-status{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.28em;color:rgba(0,229,255,.28);margin-top:7px;text-align:left;min-height:13px;}
+.ld-blink{animation:blink 1s step-end infinite;}
+@keyframes blink{50%{opacity:0;}}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:800;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,80px);height:68px;background:rgba(2,8,15,.82);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);}
+.nav-logo{font-family:'Orbitron',monospace;font-weight:900;font-size:22px;letter-spacing:.15em;color:var(--cyan);text-shadow:0 0 20px var(--cyan);}
+.nav-logo span{color:var(--text2);font-weight:400;}
+.nav-links{display:flex;gap:36px;list-style:none;}
+.nav-links a{font-family:'Rajdhani',sans-serif;font-size:12px;letter-spacing:.25em;text-transform:uppercase;color:var(--text2);text-decoration:none;transition:color .25s;cursor:none;}
+.nav-links a:hover{color:var(--cyan);}
+.nav-cta{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.2em;padding:9px 22px;border:1px solid var(--cyan);color:var(--cyan);background:transparent;cursor:none;text-decoration:none;transition:background .25s,box-shadow .25s;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);}
+.nav-cta:hover{background:rgba(0,229,255,.1);box-shadow:var(--glow);}
+@media(max-width:640px){.nav-links{display:none;}}
+
+/* CANVASES */
+#world-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+#spear-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;}
+
+/* SECTIONS */
+section{position:relative;z-index:2;}
+.container{max-width:1180px;margin:0 auto;padding:0 clamp(20px,5vw,80px);}
+.reveal{opacity:0;transform:translateY(48px);transition:opacity .9s cubic-bezier(.16,1,.3,1),transform .9s cubic-bezier(.16,1,.3,1);}
+.reveal.left{transform:translateX(-48px);}.reveal.right{transform:translateX(48px);}
+.reveal.visible{opacity:1;transform:none;}
+
+/* HERO */
+#hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:120px 20px 80px;}
+.hero-eyebrow{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.4em;color:var(--cyan2);margin-bottom:24px;display:flex;align-items:center;justify-content:center;gap:12px;}
+.hero-eyebrow::before,.hero-eyebrow::after{content:'';width:40px;height:1px;background:var(--cyan2);opacity:.4;}
+.hero-title{font-family:'Orbitron',monospace;font-size:clamp(44px,9vw,120px);font-weight:900;line-height:.95;background:linear-gradient(135deg,#fff 0%,var(--cyan) 40%,var(--cyan3) 70%,var(--teal) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;}
+.hero-title-sub{font-family:'Orbitron',monospace;font-size:clamp(16px,3.5vw,40px);font-weight:400;letter-spacing:.3em;color:var(--text2);margin-bottom:32px;}
+.hero-desc{max-width:560px;margin:0 auto 52px;font-size:16px;line-height:1.9;color:var(--text2);font-weight:300;letter-spacing:.04em;}
+.hero-btns{display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap;}
+.btn-primary{font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:.25em;text-transform:uppercase;padding:15px 42px;background:linear-gradient(135deg,var(--teal),var(--cyan));color:#000;border:none;cursor:none;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);box-shadow:0 0 30px rgba(0,229,255,.4);transition:box-shadow .3s,transform .2s;text-decoration:none;display:inline-block;}
+.btn-primary:hover{box-shadow:0 0 60px rgba(0,229,255,.7);transform:translateY(-2px);}
+.btn-ghost{font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:.25em;text-transform:uppercase;padding:14px 42px;border:1px solid var(--border);color:var(--text2);cursor:none;background:none;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);transition:border-color .3s,color .3s;text-decoration:none;}
+.btn-ghost:hover{border-color:var(--cyan);color:var(--cyan);}
+.hero-stats{display:flex;gap:clamp(28px,5vw,72px);justify-content:center;margin-top:72px;flex-wrap:wrap;}
+.hero-stat{text-align:center;}
+.hero-stat-n{font-family:'Orbitron',monospace;font-size:clamp(28px,4vw,48px);font-weight:700;color:var(--cyan);text-shadow:0 0 20px var(--cyan);}
+.hero-stat-l{font-size:11px;letter-spacing:.3em;color:var(--text2);margin-top:4px;}
+
+/* SEC */
+.sec-label{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.45em;text-transform:uppercase;color:var(--cyan2);margin-bottom:16px;display:flex;align-items:center;gap:12px;}
+.sec-label::before{content:'';width:28px;height:1px;background:var(--cyan2);opacity:.5;}
+.sec-title{font-family:'Orbitron',monospace;font-size:clamp(26px,4.5vw,52px);font-weight:700;line-height:1.1;color:var(--text);margin-bottom:20px;}
+.sec-title span{color:var(--cyan);}
+.sec-desc{font-size:15px;line-height:1.85;color:var(--text2);max-width:560px;font-weight:300;}
+
+/* BENEFITS */
+#benefits{padding:130px 0;}
+.benefits-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-top:72px;}
+.benefit-card{background:linear-gradient(135deg,rgba(0,20,38,.75),rgba(0,10,22,.88));border:1px solid var(--border);padding:40px 36px;position:relative;overflow:hidden;transition:border-color .3s,box-shadow .3s,transform .3s;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px));backdrop-filter:blur(10px);}
+.benefit-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:0;transition:opacity .3s;}
+.benefit-card:hover{border-color:rgba(0,229,255,.4);box-shadow:0 0 40px rgba(0,229,255,.07);transform:translateY(-4px);}
+.benefit-card:hover::before{opacity:1;}
+.benefit-icon{width:52px;height:52px;margin-bottom:24px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);background:rgba(0,229,255,.06);}
+.benefit-icon svg{width:24px;height:24px;stroke:var(--cyan);fill:none;stroke-width:1.5;}
+.benefit-title{font-family:'Orbitron',monospace;font-size:14px;font-weight:600;letter-spacing:.08em;color:var(--cyan);margin-bottom:12px;}
+.benefit-text{font-size:14px;line-height:1.85;color:var(--text2);font-weight:300;}
+.benefit-num{position:absolute;top:18px;right:22px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.2em;color:rgba(0,229,255,.14);}
+
+/* SPECS */
+#specs{padding:130px 0;background:linear-gradient(180deg,transparent,rgba(0,100,130,.03),transparent);}
+.specs-layout{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start;margin-top:72px;}
+@media(max-width:820px){.specs-layout{grid-template-columns:1fr;gap:48px;}}
+.spec-group{margin-bottom:48px;}
+.spec-group-title{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.35em;color:var(--cyan2);margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.spec-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid rgba(0,229,255,.06);transition:padding .2s,background .2s;}
+.spec-row:hover{padding-left:8px;background:rgba(0,229,255,.03);}
+.spec-key{font-size:13px;color:var(--text2);letter-spacing:.06em;}
+.spec-val{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--cyan);letter-spacing:.12em;background:rgba(0,229,255,.07);padding:3px 10px;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);}
+.spec-visual{position:sticky;top:100px;}
+#spec-canvas{width:100%;display:block;}
+
+/* WORLD SECTION */
+#world-section{padding:130px 0;text-align:center;}
+.globe-wrap{width:min(500px,88vw);height:min(500px,88vw);margin:60px auto 0;position:relative;}
+.globe-wrap::before{content:'';position:absolute;inset:-22%;border-radius:50%;background:radial-gradient(ellipse at 50% 50%,transparent 42%,rgba(0,180,255,.06) 62%,rgba(0,229,255,.03) 78%,transparent 100%);animation:hb 4s ease-in-out infinite;pointer-events:none;}
+@keyframes hb{0%,100%{transform:scale(1);opacity:.7;}50%{transform:scale(1.05);opacity:1;}}
+#globe-canvas{width:100%;height:100%;display:block;}
+
+/* WAITLIST */
+#waitlist{padding:140px 0;position:relative;}
+.wl-bg{position:absolute;inset:0;background:radial-gradient(ellipse 70% 50% at 50% 50%,rgba(0,100,120,.1),transparent);pointer-events:none;}
+.wl-inner{max-width:680px;margin:0 auto;text-align:center;position:relative;z-index:2;}
+.wl-badge{display:inline-flex;align-items:center;gap:8px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.3em;color:var(--cyan);border:1px solid rgba(0,229,255,.25);padding:7px 18px;margin-bottom:36px;clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);background:rgba(0,229,255,.05);}
+.wl-badge::before{content:'●';font-size:8px;color:var(--cyan3);animation:blink 1s step-end infinite;}
+@keyframes blink{50%{opacity:0;}}
+.form-row{display:flex;max-width:560px;margin:52px auto 0;border:1px solid var(--border);background:rgba(2,8,15,.9);clip-path:polygon(14px 0%,100% 0%,calc(100% - 14px) 100%,0% 100%);transition:border-color .3s,box-shadow .3s;}
+.form-row:focus-within{border-color:var(--cyan);box-shadow:0 0 28px rgba(0,229,255,.18);}
+.form-input{flex:1;padding:18px 24px;background:transparent;border:none;outline:none;font-family:'Rajdhani',sans-serif;font-size:15px;letter-spacing:.06em;color:var(--text);}
+.form-input::placeholder{color:rgba(200,238,245,.28);}
+.form-submit{padding:18px 32px;background:linear-gradient(135deg,var(--teal),var(--cyan));border:none;cursor:none;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.2em;color:#000;font-weight:700;white-space:nowrap;transition:box-shadow .3s;}
+.form-submit:hover{box-shadow:0 0 24px rgba(0,229,255,.5);}
+.form-note{font-size:11px;color:var(--text2);margin-top:14px;letter-spacing:.08em;}
+.form-count{font-family:'Share Tech Mono',monospace;color:var(--cyan);}
+#success-msg{display:none;margin-top:32px;font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:.2em;color:var(--cyan3);padding:18px 32px;border:1px solid rgba(0,255,249,.3);background:rgba(0,255,249,.05);clip-path:polygon(14px 0%,100% 0%,calc(100% - 14px) 100%,0% 100%);}
+
+/* FOOTER */
+footer{padding:60px clamp(20px,5vw,80px) 36px;border-top:1px solid var(--border);}
+.footer-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;margin-bottom:32px;}
+.footer-logo{font-family:'Orbitron',monospace;font-size:20px;font-weight:900;color:var(--cyan);}
+.footer-links{display:flex;gap:28px;list-style:none;flex-wrap:wrap;}
+.footer-links a{font-size:12px;letter-spacing:.2em;color:var(--text2);text-decoration:none;cursor:none;transition:color .2s;}
+.footer-links a:hover{color:var(--cyan);}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+.footer-copy{font-size:11px;letter-spacing:.15em;color:rgba(200,238,245,.2);}
+.footer-sig{font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,229,255,.2);}
+
+/* CORNER DECO */
+.cdeco{position:fixed;width:28px;height:28px;pointer-events:none;z-index:700;}
+.cdeco::before,.cdeco::after{content:'';position:absolute;background:var(--cyan);opacity:.28;}
+.cdeco::before{width:100%;height:1px;top:0;left:0;}.cdeco::after{width:1px;height:100%;top:0;left:0;}
+.cdeco.tl{top:76px;left:18px;}.cdeco.tr{top:76px;right:18px;transform:rotate(90deg);}
+.cdeco.bl{bottom:18px;left:18px;transform:rotate(-90deg);}.cdeco.br{bottom:18px;right:18px;transform:rotate(180deg);}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 4px);}
+</style>
+</head>
+<body>
+
+<div id="cur"></div><div id="cur-ring"></div>
+<div class="cdeco tl"></div><div class="cdeco tr"></div><div class="cdeco bl"></div><div class="cdeco br"></div>
+
+<!-- ════ CINEMATIC LOADER ════ -->
+<div id="loader">
+  <canvas id="ld-canvas"></canvas>
+  <div class="ld-ui">
+    <div class="ld-top-tag">INITIALIZING NEURAL NETWORK</div>
+    <div class="ld-logo">NEXUS AI</div>
+    <div class="ld-byline">THE INTELLIGENCE NETWORK</div>
+    <div class="ld-bar-outer">
+      <div class="ld-track"><div class="ld-fill" id="ld-fill"></div></div>
+      <div class="ld-pct" id="ld-pct">000%</div>
+      <div class="ld-status" id="ld-status">▸ connecting to orbital relay...</div>
+    </div>
+  </div>
+</div>
+
+<canvas id="world-canvas"></canvas>
+<canvas id="spear-canvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">NEXUS<span> AI</span></div>
+  <ul class="nav-links">
+    <li><a href="#benefits">Benefits</a></li>
+    <li><a href="#specs">Specifications</a></li>
+    <li><a href="#world-section">World</a></li>
+    <li><a href="#waitlist">Join List</a></li>
+  </ul>
+  <a href="#waitlist" class="nav-cta">JOIN WAITLIST</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero"><div class="container">
+  <div class="hero-eyebrow reveal">NEURAL FRONTIER TECHNOLOGY · EST. 2025</div>
+  <div class="hero-title reveal" style="transition-delay:.1s">NEXUS</div>
+  <div class="hero-title-sub reveal" style="transition-delay:.2s">INTELLIGENCE NETWORK</div>
+  <p class="hero-desc reveal" style="transition-delay:.3s">The first self-evolving AI platform built for a planetary-scale future. From orbit to endpoint — autonomous, alive, and always on.</p>
+  <div class="hero-btns reveal" style="transition-delay:.4s">
+    <a href="#waitlist" class="btn-primary">JOIN THE WAITLIST</a>
+    <a href="#benefits" class="btn-ghost">EXPLORE NEXUS</a>
+  </div>
+  <div class="hero-stats reveal" style="transition-delay:.55s">
+    <div class="hero-stat"><div class="hero-stat-n" data-count="99.97">0</div><div class="hero-stat-l">UPTIME %</div></div>
+    <div class="hero-stat"><div class="hero-stat-n" data-count="0.3">0</div><div class="hero-stat-l">MS LATENCY</div></div>
+    <div class="hero-stat"><div class="hero-stat-n" data-count="10">0</div><div class="hero-stat-l">K+ NODES</div></div>
+    <div class="hero-stat"><div class="hero-stat-n" data-count="6">0</div><div class="hero-stat-l">CONTINENTS</div></div>
+  </div>
+</div></section>
+
+<!-- BENEFITS -->
+<section id="benefits"><div class="container">
+  <div class="reveal">
+    <div class="sec-label">CORE ADVANTAGES</div>
+    <div class="sec-title">Why NEXUS <span>Dominates</span></div>
+    <p class="sec-desc">Engineered at the intersection of quantum computing and deep learning. Built for tomorrow's planetary networks — deployed today.</p>
+  </div>
+  <div class="benefits-grid">
+    <div class="benefit-card reveal" style="transition-delay:.05s"><div class="benefit-num">01</div><div class="benefit-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div><div class="benefit-title">QUANTUM MESH ROUTING</div><div class="benefit-text">Self-healing quantum mesh ensures zero single-point failures. Packets reroute in sub-millisecond intervals across entangled node architectures spanning the globe.</div></div>
+    <div class="benefit-card reveal" style="transition-delay:.1s"><div class="benefit-num">02</div><div class="benefit-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/><path d="M2 12h2M20 12h2M12 2v2M12 20v2"/></svg></div><div class="benefit-title">REAL-TIME COGNITION</div><div class="benefit-text">NEXUS processes 4.7 petabytes per second with live inference, learning from planetary data patterns and adapting its topology within seconds.</div></div>
+    <div class="benefit-card reveal" style="transition-delay:.15s"><div class="benefit-num">03</div><div class="benefit-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="benefit-title">ZERO-TRUST ENCRYPTION</div><div class="benefit-text">Post-quantum cryptographic protocols baked into every layer. No traffic is ever exposed — not even to NEXUS itself. Air-tight from atmosphere to endpoint.</div></div>
+    <div class="benefit-card reveal" style="transition-delay:.2s"><div class="benefit-num">04</div><div class="benefit-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg></div><div class="benefit-title">STELLAR SCALABILITY</div><div class="benefit-text">Spin up from 1 node to 10 million without re-architecture. NEXUS auto-shards, balances, and provisions across your entire continental constellation.</div></div>
+    <div class="benefit-card reveal" style="transition-delay:.25s"><div class="benefit-num">05</div><div class="benefit-icon"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><div class="benefit-title">PREDICTIVE ANOMALY AI</div><div class="benefit-text">Our neural sentinel detects and neutralises 99.8% of anomalies 340ms before cascade — turning reactive ops into proactive planetary-scale intelligence.</div></div>
+    <div class="benefit-card reveal" style="transition-delay:.3s"><div class="benefit-num">06</div><div class="benefit-icon"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div><div class="benefit-title">SOVEREIGN DATA VAULTS</div><div class="benefit-text">Your data never leaves your jurisdiction. Geo-fenced sovereign vaults enforce residency rules with live compliance across all 6 continents, automatically.</div></div>
+  </div>
+</div></section>
+
+<!-- SPECS -->
+<section id="specs"><div class="container">
+  <div class="reveal">
+    <div class="sec-label">TECHNICAL BLUEPRINT</div>
+    <div class="sec-title">System <span>Specifications</span></div>
+    <p class="sec-desc">Built on a foundation of frontier research. Every number here represents a breakthrough that took years to achieve.</p>
+  </div>
+  <div class="specs-layout">
+    <div>
+      <div class="spec-group reveal">
+        <div class="spec-group-title">// PERFORMANCE CORE</div>
+        <div class="spec-row"><span class="spec-key">Processing Speed</span><span class="spec-val">4.7 PB/s</span></div>
+        <div class="spec-row"><span class="spec-key">Inference Latency</span><span class="spec-val">&lt; 0.3 ms</span></div>
+        <div class="spec-row"><span class="spec-key">Model Parameters</span><span class="spec-val">1.2 TRILLION</span></div>
+        <div class="spec-row"><span class="spec-key">FLOP/s (peak)</span><span class="spec-val">10²¹</span></div>
+        <div class="spec-row"><span class="spec-key">Context Window</span><span class="spec-val">10M TOKENS</span></div>
+      </div>
+      <div class="spec-group reveal" style="transition-delay:.1s">
+        <div class="spec-group-title">// NETWORK LAYER</div>
+        <div class="spec-row"><span class="spec-key">Max Nodes</span><span class="spec-val">10,000,000</span></div>
+        <div class="spec-row"><span class="spec-key">Mesh Protocol</span><span class="spec-val">QMesh v3</span></div>
+        <div class="spec-row"><span class="spec-key">Encryption</span><span class="spec-val">CRYSTALS-Kyber</span></div>
+        <div class="spec-row"><span class="spec-key">Uptime SLA</span><span class="spec-val">99.97%</span></div>
+        <div class="spec-row"><span class="spec-key">Geo Regions</span><span class="spec-val">6 CONTINENTS</span></div>
+      </div>
+      <div class="spec-group reveal" style="transition-delay:.2s">
+        <div class="spec-group-title">// AI ENGINE</div>
+        <div class="spec-row"><span class="spec-key">Architecture</span><span class="spec-val">Sparse MoE</span></div>
+        <div class="spec-row"><span class="spec-key">Training Data</span><span class="spec-val">240 TB</span></div>
+        <div class="spec-row"><span class="spec-key">Fine-tune Cycles</span><span class="spec-val">CONTINUOUS</span></div>
+        <div class="spec-row"><span class="spec-key">Anomaly Accuracy</span><span class="spec-val">99.8%</span></div>
+        <div class="spec-row"><span class="spec-key">API Standard</span><span class="spec-val">REST / gRPC</span></div>
+      </div>
+    </div>
+    <div class="spec-visual reveal right"><canvas id="spec-canvas"></canvas></div>
+  </div>
+</div></section>
+
+<!-- WORLD SECTION -->
+<section id="world-section"><div class="container">
+  <div class="reveal">
+    <div class="sec-label" style="justify-content:center">PLANETARY REACH</div>
+    <div class="sec-title" style="text-align:center">One <span>World</span>, One Network</div>
+    <p class="sec-desc" style="margin:0 auto;text-align:center">NEXUS spans every continent, ocean, and timezone. Watch the living Earth breathe — city lights, atmosphere, and intelligence pulses from orbit to ground.</p>
+  </div>
+  <div class="globe-wrap reveal"><canvas id="globe-canvas"></canvas></div>
+</div></section>
+
+<!-- WAITLIST -->
+<section id="waitlist">
+  <div class="wl-bg"></div>
+  <div class="container"><div class="wl-inner">
+    <div class="reveal">
+      <div class="wl-badge">EARLY ACCESS PROGRAM</div>
+      <div class="sec-label" style="justify-content:center">LIMITED INVITATIONS</div>
+      <div class="sec-title" style="text-align:center">Secure Your <span>Node</span></div>
+      <p class="sec-desc" style="margin:0 auto;text-align:center">Be among the first operators to command the NEXUS network. Early adopters receive priority node allocation, 60% lifetime discount, and direct engineering access.</p>
+    </div>
+    <div class="reveal" style="transition-delay:.2s">
+      <div class="form-row">
+        <input class="form-input" type="email" id="email-input" placeholder="your@domain.io" autocomplete="off"/>
+        <button class="form-submit" onclick="handleJoin()">JOIN NOW</button>
+      </div>
+      <div class="form-note"><span class="form-count" id="join-count">2,847</span> operators already enrolled · No spam, ever.</div>
+      <div id="success-msg">◈ ACCESS REQUEST RECEIVED — NODE ALLOCATION PENDING ◈<br/><span style="font-size:10px;color:var(--text2);letter-spacing:.2em;">CHECK YOUR INBOX FOR CONFIRMATION</span></div>
+    </div>
+  </div></div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-logo">NEXUS AI</div>
+    <ul class="footer-links"><li><a href="#">Privacy</a></li><li><a href="#">Terms</a></li><li><a href="#">Docs</a></li><li><a href="#">Blog</a></li><li><a href="#">Careers</a></li></ul>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2025 NEXUS INTELLIGENCE INC. ALL RIGHTS RESERVED.</div>
+    <div class="footer-sig">SYS://v2.7.3 · NODE:ONLINE · EARTH:NOMINAL</div>
+  </div>
+</footer>
+
+<script>
+/* ── CURSOR ── */
+const cur=document.getElementById('cur'),curR=document.getElementById('cur-ring');
+let mx=innerWidth/2,my=innerHeight/2,rx=mx,ry=my;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+(function ca(){rx+=(mx-rx)*.13;ry+=(my-ry)*.13;cur.style.transform=`translate(${mx-5}px,${my-5}px)`;curR.style.transform=`translate(${rx-18}px,${ry-18}px)`;requestAnimationFrame(ca);})();
+document.querySelectorAll('a,button,.benefit-card').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.style.width=cur.style.height='18px';curR.style.width=curR.style.height='56px';curR.style.opacity='.2';});
+  el.addEventListener('mouseleave',()=>{cur.style.width=cur.style.height='10px';curR.style.width=curR.style.height='36px';curR.style.opacity='.45';});
+});
+
+/* ════════════════════════════════
+   LOADER — Earth Rising from Dark
+════════════════════════════════ */
+(function(){
+  const c=document.getElementById('ld-canvas'),ctx=c.getContext('2d');
+  let W,H; function rs(){W=c.width=innerWidth;H=c.height=innerHeight;} rs();window.addEventListener('resize',rs);
+
+  const stars=Array.from({length:350},()=>({x:Math.random(),y:Math.random(),r:Math.random()*.85+.2,tw:Math.random()*Math.PI*2,ts:.003+Math.random()*.007}));
+  let prog=0,earthAngle=0,rafId;
+  const startT=Date.now(),DUR=3600;
+  const STATUSES=['▸ connecting to orbital relay...','▸ loading atmosphere shader...','▸ calibrating magnetosphere...','▸ syncing continental data...','▸ initialising neural mesh...','▸ system nominal — entering...'];
+  const ldFill=document.getElementById('ld-fill'),ldPct=document.getElementById('ld-pct'),ldStatus=document.getElementById('ld-status');
+  let lastSI=0;
+
+  function tick(){
+    const t=Math.min((Date.now()-startT)/DUR,1);
+    prog=1-Math.pow(2,-10*t);
+    ldFill.style.width=(prog*100)+'%';
+    ldPct.textContent=String(Math.floor(prog*100)).padStart(3,'0')+'%';
+    const si=Math.min(Math.floor(prog*STATUSES.length),STATUSES.length-1);
+    if(si!==lastSI){ldStatus.textContent=STATUSES[si];lastSI=si;}
+    if(t<1) requestAnimationFrame(tick); else setTimeout(()=>{cancelAnimationFrame(rafId);endLoader();},380);
+  }
+  requestAnimationFrame(tick);
+
+  function drawEarth(cx,cy,R,ang){
+    if(R<2) return;
+    ctx.save();ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.clip();
+    // ocean
+    const og=ctx.createRadialGradient(cx-R*.28,cy-R*.22,0,cx,cy,R);
+    og.addColorStop(0,'#1d6a9e');og.addColorStop(.45,'#0b3660');og.addColorStop(.8,'#06203c');og.addColorStop(1,'#030f20');
+    ctx.fillStyle=og;ctx.fillRect(cx-R,cy-R,R*2,R*2);
+    // continents
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(ang);
+    const bc=(ox,oy,rx2,ry2,col,a)=>{
+      [0,1,-1].forEach(k=>{ctx.beginPath();ctx.ellipse(ox*R+k*R*4.1,oy*R,rx2*R,ry2*R,0,0,Math.PI*2);ctx.fillStyle=col;ctx.globalAlpha=a;ctx.fill();ctx.globalAlpha=1;});
+    };
+    bc(-.52,-.2,.18,.23,'#2a8048',.92);bc(-.43,.3,.12,.2,'#236838',.92);
+    bc(.11,-.15,.11,.14,'#2a8048',.88);bc(.16,.2,.13,.23,'#236838',.92);
+    bc(.45,-.2,.28,.2,'#2a8048',.92);bc(.54,.33,.11,.09,'#236838',.88);
+    bc(-.37,-.58,.1,.07,'#cce8f2',.78);bc(0,.8,.42,.1,'#ddeef5',.88);
+    ctx.restore();
+    // clouds
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(ang*.65);
+    for(let i=0;i<10;i++){const a=i/10*Math.PI*2,cr=R*(.5+Math.sin(i*1.9)*.3);ctx.beginPath();ctx.ellipse(Math.cos(a)*cr,Math.sin(a)*cr,R*(.1+Math.cos(i*2.2)*.04),R*.054,a,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.15)';ctx.fill();}
+    ctx.restore();
+    // night shadow
+    const ns=ctx.createRadialGradient(cx+R*.42,cy,0,cx+R*.56,cy,R*1.12);
+    ns.addColorStop(0,'transparent');ns.addColorStop(.5,'rgba(2,8,15,.32)');ns.addColorStop(1,'rgba(2,8,15,.82)');
+    ctx.fillStyle=ns;ctx.fillRect(cx-R,cy-R,R*2,R*2);
+    ctx.restore();
+    // atmosphere glow
+    const atmo=ctx.createRadialGradient(cx,cy,R*.86,cx,cy,R*1.32);
+    atmo.addColorStop(0,'rgba(25,175,255,.22)');atmo.addColorStop(.4,'rgba(0,140,220,.1)');atmo.addColorStop(.7,'rgba(0,90,170,.04)');atmo.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(cx,cy,R*1.32,0,Math.PI*2);ctx.fillStyle=atmo;ctx.fill();
+    // outer haze
+    const atmo2=ctx.createRadialGradient(cx,cy,R*1.12,cx,cy,R*1.62);
+    atmo2.addColorStop(0,'rgba(0,200,255,.06)');atmo2.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(cx,cy,R*1.62,0,Math.PI*2);ctx.fillStyle=atmo2;ctx.fill();
+    // specular shine (upper left)
+    const sh=ctx.createRadialGradient(cx-R*.32,cy-R*.38,0,cx-R*.18,cy-R*.24,R*.65);
+    sh.addColorStop(0,'rgba(210,248,255,.35)');sh.addColorStop(.45,'rgba(160,225,255,.1)');sh.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(cx,cy,R*1.08,0,Math.PI*2);ctx.fillStyle=sh;ctx.fill();
+    // limb
+    ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.strokeStyle='rgba(55,200,255,.62)';ctx.lineWidth=R*.017;ctx.stroke();
+    ctx.strokeStyle='rgba(100,220,255,.13)';ctx.lineWidth=R*.05;ctx.stroke();
+  }
+
+  function loop(){
+    ctx.clearRect(0,0,W,H);
+    // stars
+    stars.forEach(s=>{s.tw+=s.ts;const al=.15+.45*(.5+.5*Math.sin(s.tw));ctx.beginPath();ctx.arc(s.x*W,s.y*H,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(200,228,255,${al})`;ctx.fill();});
+    // earth rises and grows
+    const ease=1-Math.pow(1-Math.min(prog*1.35,1),3);
+    const R=Math.min(W,H)*.36*ease;
+    const ey=H*.5+(H*1.5-H*.5)*(1-ease);
+    earthAngle+=.002;
+    drawEarth(W/2,ey,R,earthAngle);
+    rafId=requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+function endLoader(){
+  document.getElementById('loader').classList.add('fade-out');
+  setTimeout(()=>{ document.getElementById('loader').style.display='none'; },1300);
+  initWorldBg(); initSpear(); initSpecCanvas(); initGlobe(); revealOnScroll(); countUp();
+}
+
+/* ════════════════════════════════
+   WORLD BG CANVAS — atmospheric Earth
+════════════════════════════════ */
+function initWorldBg(){
+  const c=document.getElementById('world-canvas'),ctx=c.getContext('2d');
+  let W,H; function rs(){W=c.width=innerWidth;H=c.height=innerHeight;} rs();window.addEventListener('resize',rs);
+  const stars=Array.from({length:180},()=>({x:Math.random(),y:Math.random(),r:Math.random()*.75+.2,tw:Math.random()*Math.PI*2,ts:.002+Math.random()*.004}));
+  let angle=0,scrollY=0;
+  window.addEventListener('scroll',()=>{scrollY=window.scrollY;});
+
+  function drawBgEarth(){
+    const R=Math.min(W,H)*.74;
+    const ex=W*.82,ey=H*.76+scrollY*.07;
+    ctx.save();ctx.beginPath();ctx.arc(ex,ey,R,0,Math.PI*2);ctx.clip();
+    const og=ctx.createRadialGradient(ex-R*.28,ey-R*.24,0,ex,ey,R);
+    og.addColorStop(0,'#1c6898');og.addColorStop(.45,'#0a3358');og.addColorStop(.8,'#051c35');og.addColorStop(1,'#020c1e');
+    ctx.fillStyle=og;ctx.fillRect(ex-R,ey-R,R*2,R*2);
+    ctx.save();ctx.translate(ex,ey);ctx.rotate(angle);
+    const bc=(ox,oy,rx2,ry2,col,a)=>{[0,1,-1].forEach(k=>{ctx.beginPath();ctx.ellipse(ox*R+k*R*4.1,oy*R,rx2*R,ry2*R,0,0,Math.PI*2);ctx.fillStyle=col;ctx.globalAlpha=a;ctx.fill();ctx.globalAlpha=1;});};
+    bc(-.52,-.2,.2,.24,'#1e6a3a',.92);bc(-.43,.3,.13,.2,'#196230',.92);bc(.12,-.15,.12,.14,'#1e6a3a',.88);bc(.17,.2,.14,.24,'#196230',.92);bc(.46,-.2,.3,.2,'#1e6a3a',.92);bc(.55,.33,.12,.09,'#196230',.88);bc(-.37,-.58,.1,.07,'#c8e6f0',.78);bc(0,.8,.43,.1,'#ddeef5',.88);
+    ctx.restore();
+    ctx.save();ctx.translate(ex,ey);ctx.rotate(angle*.6);
+    for(let i=0;i<11;i++){const a=i/11*Math.PI*2,cr=R*(.5+Math.sin(i*1.8)*.3);ctx.beginPath();ctx.ellipse(Math.cos(a)*cr,Math.sin(a)*cr,R*(.1+Math.cos(i*2.3)*.04),R*.055,a,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.13)';ctx.fill();}
+    ctx.restore();
+    const ns=ctx.createRadialGradient(ex+R*.43,ey,0,ex+R*.57,ey,R*1.12);
+    ns.addColorStop(0,'transparent');ns.addColorStop(.5,'rgba(2,8,15,.28)');ns.addColorStop(1,'rgba(2,8,15,.78)');
+    ctx.fillStyle=ns;ctx.fillRect(ex-R,ey-R,R*2,R*2);
+    ctx.restore();
+    const atmo=ctx.createRadialGradient(ex,ey,R*.87,ex,ey,R*1.34);
+    atmo.addColorStop(0,'rgba(22,170,250,.2)');atmo.addColorStop(.4,'rgba(0,135,215,.09)');atmo.addColorStop(.7,'rgba(0,85,165,.04)');atmo.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(ex,ey,R*1.34,0,Math.PI*2);ctx.fillStyle=atmo;ctx.fill();
+    const atmo2=ctx.createRadialGradient(ex,ey,R*1.1,ex,ey,R*1.65);
+    atmo2.addColorStop(0,'rgba(0,195,255,.05)');atmo2.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(ex,ey,R*1.65,0,Math.PI*2);ctx.fillStyle=atmo2;ctx.fill();
+    const sh=ctx.createRadialGradient(ex-R*.32,ey-R*.38,0,ex-R*.18,ey-R*.24,R*.66);
+    sh.addColorStop(0,'rgba(205,245,255,.2)');sh.addColorStop(.5,'rgba(150,220,255,.07)');sh.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(ex,ey,R*1.1,0,Math.PI*2);ctx.fillStyle=sh;ctx.fill();
+    ctx.beginPath();ctx.arc(ex,ey,R,0,Math.PI*2);ctx.strokeStyle='rgba(45,195,255,.38)';ctx.lineWidth=R*.013;ctx.stroke();
+    ctx.strokeStyle='rgba(90,215,255,.08)';ctx.lineWidth=R*.04;ctx.stroke();
+  }
+
+  (function loop(){
+    ctx.fillStyle='rgba(2,8,15,.97)';ctx.fillRect(0,0,W,H);
+    stars.forEach(s=>{s.tw+=s.ts;const al=.1+.35*(.5+.5*Math.sin(s.tw));ctx.beginPath();ctx.arc(s.x*W,s.y*H,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(200,225,255,${al})`;ctx.fill();});
+    drawBgEarth();
+    angle+=.0007;
+    requestAnimationFrame(loop);
+  })();
+}
+
+/* ════════════════════════════════
+   SPEAR
+════════════════════════════════ */
+function initSpear(){
+  const c=document.getElementById('spear-canvas'),ctx=c.getContext('2d');
+  let W,H; function rs(){W=c.width=innerWidth;H=c.height=innerHeight;} rs();window.addEventListener('resize',rs);
+  let t=0;
+  function sp(x1,y1,x2,y2,c1,c2,lw,gw){
+    const g=ctx.createLinearGradient(x1,y1,x2,y2);
+    g.addColorStop(0,'transparent');g.addColorStop(.55,c1+'55');g.addColorStop(.88,c2+'cc');g.addColorStop(1,c2);
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=g;ctx.lineWidth=lw;ctx.stroke();
+    const gg=ctx.createLinearGradient(x1,y1,x2,y2);
+    gg.addColorStop(0,'transparent');gg.addColorStop(.7,c1+'1a');gg.addColorStop(1,c1+'33');
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=gg;ctx.lineWidth=gw;ctx.stroke();
+    ctx.beginPath();ctx.arc(x2,y2,4,0,Math.PI*2);ctx.fillStyle=c2;ctx.fill();
+    const tg=ctx.createRadialGradient(x2,y2,0,x2,y2,24);tg.addColorStop(0,c2+'99');tg.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(x2,y2,24,0,Math.PI*2);ctx.fillStyle=tg;ctx.fill();
+  }
+  (function loop(){
+    ctx.clearRect(0,0,W,H);t+=.009;
+    sp(W*.08+Math.sin(t*.6)*W*.12,H*.86+Math.sin(t*.4)*H*.06,W*.9+Math.sin(t*.5+1)*W*.05,H*.07+Math.cos(t*.35)*H*.06,'#00e5ff','#00fff9',2.5,18);
+    sp(W*.92+Math.cos(t*.45)*W*.07,H*.88+Math.sin(t*.3+2)*H*.05,W*.1+Math.cos(t*.38+1)*W*.07,H*.13+Math.sin(t*.28)*H*.07,'#00897b','#00e5ff',1.5,12);
+    requestAnimationFrame(loop);
+  })();
+}
+
+/* ════════════════════════════════
+   SPEC WIREFRAME ORB
+════════════════════════════════ */
+function initSpecCanvas(){
+  const c=document.getElementById('spec-canvas');if(!c)return;
+  const ctx=c.getContext('2d');let sz=c.parentElement.clientWidth;c.width=c.height=sz;let ang=0;
+  (function loop(){
+    ctx.clearRect(0,0,sz,sz);
+    const cx=sz/2,cy=sz/2,R=sz*.34,cos=Math.cos(ang),sin=Math.sin(ang),cos2=Math.cos(ang*.7),sin2=Math.sin(ang*.7);
+    const v=[[0,R,0],[0,-R,0],[R*.8,R*.4,0],[R*.8,-R*.4,0],[-R*.8,R*.4,0],[-R*.8,-R*.4,0],[0,R*.4,R*.8],[0,-R*.4,R*.8],[0,R*.4,-R*.8],[0,-R*.4,-R*.8],[R*.8,0,R*.4],[R*.8,0,-R*.4],[-R*.8,0,R*.4],[-R*.8,0,-R*.4]];
+    const proj=([x,y,z])=>{const x1=x*cos-z*sin,z1=x*sin+z*cos,y2=y*cos2-z1*sin2,z2=y*sin2+z1*cos2,fov=sz*1.4,sc=fov/(fov+z2+sz*.5);return[cx+x1*sc,cy+y2*sc,z2];};
+    const p=v.map(proj);
+    [[0,2],[0,4],[0,6],[0,8],[1,3],[1,5],[1,7],[1,9],[2,3],[4,5],[6,7],[8,9],[2,10],[3,10],[2,11],[3,11],[4,12],[5,12],[4,13],[5,13],[10,6],[11,8],[12,7],[13,9]].forEach(([a,b])=>{
+      const d=(p[a][2]+p[b][2])*.5,al=Math.max(.04,.08+.18*(1-(d+R)/(2*R)));
+      ctx.beginPath();ctx.moveTo(p[a][0],p[a][1]);ctx.lineTo(p[b][0],p[b][1]);ctx.strokeStyle=`rgba(0,229,255,${al})`;ctx.lineWidth=.8;ctx.stroke();
+    });
+    p.forEach(([x,y,z])=>{const al=Math.max(.1,.3+.65*(1-(z+R)/(2*R)));ctx.beginPath();ctx.arc(x,y,2.2,0,Math.PI*2);ctx.fillStyle=`rgba(0,229,255,${al})`;ctx.fill();});
+    const pulse=.5+.5*Math.sin(ang*3);
+    ctx.beginPath();ctx.arc(cx,cy,R*1.12,0,Math.PI*2);ctx.strokeStyle=`rgba(0,229,255,${.06+pulse*.07})`;ctx.lineWidth=1;ctx.stroke();
+    ctx.beginPath();ctx.arc(cx,cy,R*1.3,0,Math.PI*2);ctx.strokeStyle=`rgba(0,137,123,${.03+pulse*.04})`;ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle='rgba(0,229,255,.22)';ctx.font=`7px 'Share Tech Mono',monospace`;ctx.textAlign='center';
+    ['CORE','MESH','SYNC','NODE','DATA'].forEach((l,i)=>{ctx.fillText(l,p[i][0],p[i][1]-10);});
+    ang+=.006;requestAnimationFrame(loop);
+  })();
+}
+
+/* ════════════════════════════════
+   GLOBE SECTION — Earth with shine, atmosphere, city lights
+════════════════════════════════ */
+function initGlobe(){
+  const c=document.getElementById('globe-canvas');if(!c)return;
+  const ctx=c.getContext('2d');
+  let sz=Math.min(c.parentElement.clientWidth,c.parentElement.clientHeight);
+  c.width=c.height=sz;
+  const cx=sz/2,cy=sz/2,R=sz*.43;
+  let ang=0;
+  const cities=Array.from({length:60},()=>({lat:(Math.random()-.5)*Math.PI*.88,lon:Math.random()*Math.PI*2,pulse:Math.random()*Math.PI*2,speed:.5+Math.random()}));
+
+  function ll(lat,lon,r){return{x:r*Math.cos(lat)*Math.sin(lon+ang),y:r*Math.sin(lat),z:r*Math.cos(lat)*Math.cos(lon+ang)};}
+
+  (function loop(){
+    ctx.clearRect(0,0,sz,sz);
+    // clip + ocean
+    ctx.save();ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.clip();
+    const og=ctx.createRadialGradient(cx-R*.26,cy-R*.22,0,cx,cy,R);
+    og.addColorStop(0,'#206ea8');og.addColorStop(.45,'#0d3e70');og.addColorStop(.8,'#062045');og.addColorStop(1,'#030f22');
+    ctx.fillStyle=og;ctx.fillRect(cx-R,cy-R,R*2,R*2);
+    // continents
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(ang);
+    const bc=(ox,oy,rx2,ry2,col,a)=>{[0,1,-1].forEach(k=>{ctx.beginPath();ctx.ellipse(ox*R+k*R*4.1,oy*R,rx2*R,ry2*R,0,0,Math.PI*2);ctx.fillStyle=col;ctx.globalAlpha=a;ctx.fill();ctx.globalAlpha=1;});};
+    bc(-.52,-.2,.18,.23,'#2f8a52',.93);bc(-.43,.3,.12,.2,'#287842',.93);bc(.11,-.15,.11,.14,'#2f8a52',.88);bc(.16,.2,.13,.23,'#287842',.93);bc(.45,-.2,.28,.2,'#2f8a52',.93);bc(.54,.33,.11,.09,'#287842',.88);bc(-.37,-.58,.1,.07,'#cde8f2',.8);bc(0,.8,.42,.1,'#ddeef5',.9);
+    ctx.restore();
+    // clouds
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(ang*.62);
+    for(let i=0;i<11;i++){const a=i/11*Math.PI*2,cr=R*(.5+Math.sin(i*1.75)*.3);ctx.beginPath();ctx.ellipse(Math.cos(a)*cr,Math.sin(a)*cr,R*(.1+Math.cos(i*2.25)*.04),R*.055,a,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.17)';ctx.fill();}
+    ctx.restore();
+    // night shadow
+    const ns=ctx.createRadialGradient(cx+R*.44,cy,0,cx+R*.58,cy,R*1.12);
+    ns.addColorStop(0,'transparent');ns.addColorStop(.5,'rgba(2,8,15,.3)');ns.addColorStop(1,'rgba(2,8,15,.82)');
+    ctx.fillStyle=ns;ctx.fillRect(cx-R,cy-R,R*2,R*2);
+    ctx.restore();
+
+    // city lights (night side)
+    cities.forEach(city=>{
+      city.pulse+=.014*city.speed;
+      const p=ll(city.lat,city.lon,R);
+      if(p.z<0.12){
+        const x=cx+p.x,y=cy-p.y,a=.35+.55*Math.sin(city.pulse);
+        ctx.beginPath();ctx.arc(x,y,1.6,0,Math.PI*2);ctx.fillStyle=`rgba(255,240,170,${a*.82})`;ctx.fill();
+        if(Math.sin(city.pulse)>.68){const lg=ctx.createRadialGradient(x,y,0,x,y,8);lg.addColorStop(0,`rgba(255,225,90,${a*.45})`);lg.addColorStop(1,'transparent');ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.fillStyle=lg;ctx.fill();}
+      }
+    });
+
+    // ATMOSPHERE
+    const atmo=ctx.createRadialGradient(cx,cy,R*.84,cx,cy,R*1.38);
+    atmo.addColorStop(0,'rgba(28,182,255,.24)');atmo.addColorStop(.35,'rgba(0,152,235,.12)');atmo.addColorStop(.65,'rgba(0,100,185,.05)');atmo.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(cx,cy,R*1.38,0,Math.PI*2);ctx.fillStyle=atmo;ctx.fill();
+    // haze
+    const atmo2=ctx.createRadialGradient(cx,cy,R*1.1,cx,cy,R*1.68);
+    atmo2.addColorStop(0,'rgba(0,200,255,.07)');atmo2.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(cx,cy,R*1.68,0,Math.PI*2);ctx.fillStyle=atmo2;ctx.fill();
+    // SHINE — upper left specular
+    const sh=ctx.createRadialGradient(cx-R*.34,cy-R*.4,0,cx-R*.18,cy-R*.25,R*.64);
+    sh.addColorStop(0,'rgba(220,250,255,.38)');sh.addColorStop(.42,'rgba(170,230,255,.12)');sh.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(cx,cy,R*1.06,0,Math.PI*2);ctx.fillStyle=sh;ctx.fill();
+    // secondary glint
+    const sh2=ctx.createRadialGradient(cx-R*.2,cy-R*.28,0,cx-R*.12,cy-R*.18,R*.25);
+    sh2.addColorStop(0,'rgba(255,255,255,.18)');sh2.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fillStyle=sh2;ctx.fill();
+    // limb
+    ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.strokeStyle='rgba(60,205,255,.65)';ctx.lineWidth=R*.017;ctx.stroke();
+    ctx.strokeStyle='rgba(100,225,255,.14)';ctx.lineWidth=R*.055;ctx.stroke();
+
+    ang+=.003;requestAnimationFrame(loop);
+  })();
+}
+
+/* ── SCROLL REVEAL ── */
+function revealOnScroll(){
+  const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:.1});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+}
+
+/* ── COUNT UP ── */
+function countUp(){
+  document.querySelectorAll('.hero-stat-n[data-count]').forEach(el=>{
+    const target=parseFloat(el.dataset.count),dec=(target%1!==0)?2:0;
+    let step=0;const iv=setInterval(()=>{step++;const v=target*(step/60);el.textContent=dec?v.toFixed(dec):Math.floor(v);if(step>=60){el.textContent=dec?target.toFixed(dec):target;clearInterval(iv);}},25);
+  });
+}
+
+/* ── WAITLIST ── */
+let joinCount=2847;
+function handleJoin(){
+  const inp=document.getElementById('email-input'),email=inp.value.trim();
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    inp.style.color='#ff5a5a';inp.placeholder='ENTER A VALID EMAIL';
+    setTimeout(()=>{inp.style.color='';inp.placeholder='your@domain.io';},2100);return;
+  }
+  joinCount++;document.getElementById('join-count').textContent=joinCount.toLocaleString();
+  document.getElementById('success-msg').style.display='block';document.querySelector('.form-row').style.display='none';
+}
+document.getElementById('email-input').addEventListener('keydown',e=>{if(e.key==='Enter')handleJoin();});
+
+/* ── SMOOTH NAV ── */
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{e.preventDefault();const t=document.querySelector(a.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth',block:'start'});});
+});
+</script>
+</body>
+</html>
